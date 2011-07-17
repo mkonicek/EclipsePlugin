@@ -1,4 +1,4 @@
-package firstplugin;
+package n4;
 
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugPlugin;

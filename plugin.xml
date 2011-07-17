@@ -18,7 +18,7 @@
          <action
                label="Sample Action"
                icon="icons/sample.gif"
-               class="firstplugin.actions.SampleAction"
+               class="n4.SampleAction"
                tooltip="Hello, Eclipse world"
                menubarPath="sampleMenu/sampleGroup"
                toolbarPath="sampleGroup"
@@ -27,7 +27,7 @@
          <action
                label="Sample Action 2"
                icon="icons/sample.gif"
-               class="firstplugin.actions.SampleAction"
+               class="n4.SampleAction"
                tooltip="Hello, Eclipse world"
                menubarPath="sampleMenu/sampleGroup"
                toolbarPath="sampleGroup"

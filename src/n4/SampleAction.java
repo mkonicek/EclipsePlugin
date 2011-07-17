@@ -1,4 +1,4 @@
-package firstplugin.actions;
+package n4;
 
 import java.util.*;
 
@@ -40,15 +40,6 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		debugger = DebugPlugin.getDefault();
 	}
 
-	/** Gets the VM stack frame selected in the debugger UI. */
-	protected IJavaStackFrame getSelectedStackFrame() throws Exception {
-		IAdaptable context = DebugUITools.getDebugContext();
-		if (context instanceof IJavaStackFrame) {
-			return (IJavaStackFrame)context;
-		}
-		throw new Exception("Can't get current stackframe");
-	}
-
 	/**
 	 * The action has been activated. The argument of the
 	 * method represents the 'real' action sitting
@@ -56,8 +47,8 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public void run(IAction action) {
-		// Use org.eclipse.jdt.debug.
-		VirtualMachineManager mgr = org.eclipse.jdi.Bootstrap.virtualMachineManager();
+		InspectorWindow inspectorWindow = new InspectorWindow();
+		inspectorWindow.open();
 
 		final IJavaStackFrame stackFrame;
 		try {
@@ -71,9 +62,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			public void watchEvaluationFinished(IWatchExpressionResult result) {
 				try {
 					//result.getErrorMessages()
-
 					IJavaObject valIt = (IJavaObject)result.getValue();
-
 					IJavaValue[] emptyArgs = new IJavaValue[0];
 					String typeSignature = null;
 					IJavaThread thread = (IJavaThread)stackFrame.getThread();
@@ -108,6 +97,15 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/** Gets the VM stack frame selected in the debugger UI. */
+	protected IJavaStackFrame getSelectedStackFrame() throws Exception {
+		IAdaptable context = DebugUITools.getDebugContext();
+		if (context instanceof IJavaStackFrame) {
+			return (IJavaStackFrame)context;
+		}
+		throw new Exception("Can't get current stackframe");
 	}
 
 	/** Asynchronously evaluates given expression text. Calls listener when done. */
