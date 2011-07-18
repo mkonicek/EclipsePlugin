@@ -55,19 +55,27 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			return;
 		}
 
-		IWatchExpressionListener listener= new IWatchExpressionListener() {
+		IWatchExpressionListener listener = new IWatchExpressionListener() {
 			public void watchEvaluationFinished(IWatchExpressionResult resIterator) {
 				try {
 					//result.getErrorMessages()
 					TreeNode root = new TreeNode("list", "");
+					// TODO all variables on the stack
+					// TODO create expandable subnodes with variables
 					for(TreeNode child : iteratorContents((IJavaObject)resIterator.getValue(), stackFrame)) {
 						root.addChild(child);
 					}
-					ArrayList<TreeNode> rootLevelNodes = new ArrayList<TreeNode>();
+					
+					final ArrayList<TreeNode> rootLevelNodes = new ArrayList<TreeNode>();
 					rootLevelNodes.add(root);
 					
-					InspectorWindow inspectorWindow = new InspectorWindow();
-					inspectorWindow.open(rootLevelNodes);
+					window.getShell().getDisplay().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							InspectorWindow inspectorWindow = new InspectorWindow();
+							inspectorWindow.open(rootLevelNodes);
+						}
+					});
 					
 					/*MessageDialog.openInformation(
 						window.getShell(),
