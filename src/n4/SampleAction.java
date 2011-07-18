@@ -47,9 +47,6 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public void run(IAction action) {
-		InspectorWindow inspectorWindow = new InspectorWindow();
-		inspectorWindow.open();
-
 		final IJavaStackFrame stackFrame;
 		try {
 			stackFrame = getSelectedStackFrame();
@@ -59,28 +56,19 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		}
 
 		IWatchExpressionListener listener= new IWatchExpressionListener() {
-			public void watchEvaluationFinished(IWatchExpressionResult result) {
+			public void watchEvaluationFinished(IWatchExpressionResult resIterator) {
 				try {
 					//result.getErrorMessages()
-					IJavaObject valIt = (IJavaObject)result.getValue();
-					IJavaValue[] emptyArgs = new IJavaValue[0];
-					String typeSignature = null;
-					IJavaThread thread = (IJavaThread)stackFrame.getThread();
-					int i = 0;
-					while(true) {
-						IJavaValue valHasNext = valIt.sendMessage("hasNext", "()Z", emptyArgs, thread, typeSignature);
-						if (valHasNext.getValueString() == "false") {
-							break;
-						}
-						// this is a node
-						IJavaObject valItem = (IJavaObject)valIt.sendMessage("next", "()Ljava/lang/Object;", emptyArgs, thread, typeSignature);
-						String itemTypeSig = valItem.getSignature();
-					    IJavaValue valItemToString = valItem.sendMessage("toString", "()Ljava/lang/String;", emptyArgs, thread, typeSignature);
-					    // this is node's description
-						String valItemString = valItemToString.getValueString();
-						System.out.println(i + ". = " + valItemString + ", [" + itemTypeSig + "]");
-						i++;
+					TreeNode root = new TreeNode("list", "");
+					for(TreeNode child : iteratorContents((IJavaObject)resIterator.getValue(), stackFrame)) {
+						root.addChild(child);
 					}
+					ArrayList<TreeNode> rootLevelNodes = new ArrayList<TreeNode>();
+					rootLevelNodes.add(root);
+					
+					InspectorWindow inspectorWindow = new InspectorWindow();
+					inspectorWindow.open(rootLevelNodes);
+					
 					/*MessageDialog.openInformation(
 						window.getShell(),
 						"FirstPlugin",
@@ -129,6 +117,31 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		if (typeSignature.equals("Ljava/lang/Short;")) return true;
 		if (typeSignature.equals("Ljava/lang/Byte;")) return true;
 		return false;
+	}
+	
+	private Iterable<TreeNode> iteratorContents(IJavaObject valIt, IJavaStackFrame stackFrame) throws DebugException {
+		ArrayList<TreeNode> result = new ArrayList<TreeNode>();
+		IJavaValue[] emptyArgs = new IJavaValue[0];
+		String typeSignature = null;
+		IJavaThread thread = (IJavaThread)stackFrame.getThread();
+		int i = 0;
+		// iterate over the iterator
+		while(true) {
+			IJavaValue valHasNext = valIt.sendMessage("hasNext", "()Z", emptyArgs, thread, typeSignature);
+			if (valHasNext.getValueString() == "false") {
+				break;
+			}
+			// node
+			IJavaObject valItem = (IJavaObject)valIt.sendMessage("next", "()Ljava/lang/Object;", emptyArgs, thread, typeSignature);
+			//String itemTypeSig = valItem.getSignature();
+		    IJavaValue valItemToString = valItem.sendMessage("toString", "()Ljava/lang/String;", emptyArgs, thread, typeSignature);
+		    // node's description
+			String valItemString = valItemToString.getValueString();
+			result.add(new TreeNode(i + "", valItemString));
+			//System.out.println(i + ". = " + valItemString + ", [" + itemTypeSig + "]");
+			i++;
+		}
+		return result;
 	}
 
 	/**
