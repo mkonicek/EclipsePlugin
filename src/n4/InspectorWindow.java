@@ -31,6 +31,12 @@ public class InspectorWindow {
 	private void fillTree(Tree tree, Iterable<TreeNode> nodes) {
 		for (TreeNode node : nodes) {
 			TreeItem rootLevelItem = new TreeItem(tree, SWT.NONE);
+//			rootLevelItem.addListener(SWT.Expand, new Listener() {
+//				@Override
+//				public void handleEvent(Event event) {
+//					
+//				}
+//			});
 			fillTreeItem(rootLevelItem, node);
 		}
 	}

@@ -28,10 +28,13 @@ public class TreeNode {
 	public Iterable<TreeNode> getChildren() {
 		return Children;
 	}
-	public void addChild(TreeNode child) {
+	public TreeNode addChild(TreeNode child) {
 		Children.add(child);
+		return child;
 	}
-	public void addChild(String name, String value) {
-		Children.add(new TreeNode(name, value));
+	public TreeNode addChild(String name, String value) {
+		TreeNode newChild = new TreeNode(name, value);
+		Children.add(newChild);
+		return newChild;
 	}
 }

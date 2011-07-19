@@ -6,20 +6,11 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.*;
 import org.eclipse.debug.core.model.*;
 import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.jdi.internal.VirtualMachineManagerImpl;
 import org.eclipse.jdt.debug.core.*;
-import org.eclipse.jdt.debug.eval.EvaluationManager;
-import org.eclipse.jdt.internal.debug.core.model.JDIObjectValue;
-import org.eclipse.jdt.internal.debug.core.model.JDIStackFrame;
-import org.eclipse.jdt.internal.debug.core.model.JDIThread;
-import org.eclipse.jdt.internal.debug.core.model.JDIValue;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.jface.dialogs.MessageDialog;
-
-import com.sun.jdi.*;
 
 /**
  * Our sample action implements workbench action delegate.
@@ -31,13 +22,11 @@ import com.sun.jdi.*;
  */
 public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
-	private DebugPlugin debugger;
 
 	/**
 	 * The constructor.
 	 */
 	public SampleAction() {
-		debugger = DebugPlugin.getDefault();
 	}
 
 	/**
@@ -47,54 +36,86 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public void run(IAction action) {
-		final IJavaStackFrame stackFrame;
+//		IWatchExpressionListener listener = new IWatchExpressionListener() {
+//			public void watchEvaluationFinished(IWatchExpressionResult resIterator) {
+//				System.out.println(resIterator.toString());
+//				//result.getErrorMessages()
+//				/*MessageDialog.openInformation(
+//					window.getShell(),
+//					"FirstPlugin",
+//					"Value of expr = " + exprValue + ", type: " + exprType);*/
+//			}
+//		};
+//		IExpressionManager exprMgr = DebugPlugin.getDefault().getExpressionManager();
+//		try {
+//			System.out.println("evaluating first elem");
+//			evaluate("((java.lang.Iterable)list).iterator()", getSelectedStackFrame(), listener, exprMgr);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		
+		final ArrayList<TreeNode> rootLevelNodes = new ArrayList<TreeNode>();
 		try {
-			stackFrame = getSelectedStackFrame();
+			final IJavaStackFrame stackFrame = getSelectedStackFrame();
+			for(IVariable variable : stackFrame.getVariables()) {
+				rootLevelNodes.add(makeTreeNode(variable, (IJavaThread)stackFrame.getThread(), 0));
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			return;
 		}
-
-		IWatchExpressionListener listener = new IWatchExpressionListener() {
-			public void watchEvaluationFinished(IWatchExpressionResult resIterator) {
-				try {
-					//result.getErrorMessages()
-					TreeNode root = new TreeNode("list", "");
-					// TODO all variables on the stack
-					// TODO create expandable subnodes with variables
-					for(TreeNode child : iteratorContents((IJavaObject)resIterator.getValue(), stackFrame)) {
-						root.addChild(child);
-					}
-					
-					final ArrayList<TreeNode> rootLevelNodes = new ArrayList<TreeNode>();
-					rootLevelNodes.add(root);
-					
-					window.getShell().getDisplay().asyncExec(new Runnable() {
-						@Override
-						public void run() {
-							InspectorWindow inspectorWindow = new InspectorWindow();
-							inspectorWindow.open(rootLevelNodes);
-						}
-					});
-					
-					/*MessageDialog.openInformation(
-						window.getShell(),
-						"FirstPlugin",
-						"Value of expr = " + exprValue + ", type: " + exprType);*/
-				} catch (DebugException e) {
-					e.printStackTrace();
-				}
-			}
-		};
-		IExpressionManager exprMgr = DebugPlugin.getDefault().getExpressionManager();
-		try {
-			System.out.println("evaluating first elem");
-			evaluate("((java.lang.Iterable)list).iterator()", stackFrame, listener, exprMgr);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		InspectorWindow inspectorWindow = new InspectorWindow();
+		inspectorWindow.open(rootLevelNodes);
+		// marshal to UI thread
+//		window.getShell().getDisplay().asyncExec(new Runnable() {
+//			@Override
+//			public void run() {
+//				
+//			}
+//		});
 	}
 	
+	private TreeNode makeTreeNode(IVariable variable, IJavaThread thread, int depth) throws DebugException {
+		return makeTreeNode(variable.getName(), (IJavaValue)variable.getValue(), thread, depth);
+	}
+	
+	private TreeNode makeTreeNode(String nodeName, IJavaValue variableValue, IJavaThread thread, int depth) throws DebugException {
+		TreeNode result = new TreeNode(nodeName, "");
+		
+		if (variableValue instanceof IJavaObject) {
+			IJavaObject objValue = (IJavaObject)variableValue;
+			IJavaValue[] emptyArgs = new IJavaValue[0];
+			String defaultSignature = null;
+			try {
+				IJavaValue valItemToString = objValue.sendMessage("toString", "()Ljava/lang/String;", emptyArgs, thread, defaultSignature);
+				result.setValue(valItemToString.getValueString());
+			} catch (DebugException ex) {
+				ex.printStackTrace();
+			}
+			
+			IJavaObject valIt = null;
+			try {
+				valIt = (IJavaObject)objValue.sendMessage("iterator", "()Ljava/util/Iterator;", emptyArgs, thread, defaultSignature);
+			} catch (DebugException ex) {
+			}
+			if (valIt != null) {
+				TreeNode iteratorNode = result.addChild("iterator", "");
+				for (TreeNode iteratorItemNode : iteratorContents(valIt, thread)) {
+					iteratorNode.addChild(iteratorItemNode);
+				}
+			}
+			if (depth < 3 && !isPrimitiveType(variableValue.getSignature())) {
+				for (IVariable childVar : variableValue.getVariables()) {
+					TreeNode childVarNode = makeTreeNode(childVar, thread, depth + 1);
+					result.addChild(childVarNode);
+				}
+			}
+		} else {
+			// primitive type variable
+			result.setValue(variableValue.toString());
+		}
+		return result;
+	}
+
 	/** Gets the VM stack frame selected in the debugger UI. */
 	protected IJavaStackFrame getSelectedStackFrame() throws Exception {
 		IAdaptable context = DebugUITools.getDebugContext();
@@ -116,6 +137,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	/** Return true if type signature identifies a primitive type.
 	 *  Instances of primitive cannot not be further expanded.*/
 	private boolean isPrimitiveType(String typeSignature) {
+		if (typeSignature == null) return true;
 		if (typeSignature.equals("Ljava/lang/String;")) return true;
 		if (typeSignature.equals("Ljava/lang/Integer;")) return true;
 		if (typeSignature.equals("Ljava/lang/Double;")) return true;
@@ -127,26 +149,20 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		return false;
 	}
 	
-	private Iterable<TreeNode> iteratorContents(IJavaObject valIt, IJavaStackFrame stackFrame) throws DebugException {
+	private Iterable<TreeNode> iteratorContents(IJavaObject valIt, IJavaThread thread) throws DebugException {
 		ArrayList<TreeNode> result = new ArrayList<TreeNode>();
 		IJavaValue[] emptyArgs = new IJavaValue[0];
-		String typeSignature = null;
-		IJavaThread thread = (IJavaThread)stackFrame.getThread();
+		String defaultSignature = null;
 		int i = 0;
 		// iterate over the iterator
 		while(true) {
-			IJavaValue valHasNext = valIt.sendMessage("hasNext", "()Z", emptyArgs, thread, typeSignature);
+			IJavaValue valHasNext = valIt.sendMessage("hasNext", "()Z", emptyArgs, thread, defaultSignature);
 			if (valHasNext.getValueString() == "false") {
 				break;
 			}
 			// node
-			IJavaObject valItem = (IJavaObject)valIt.sendMessage("next", "()Ljava/lang/Object;", emptyArgs, thread, typeSignature);
-			//String itemTypeSig = valItem.getSignature();
-		    IJavaValue valItemToString = valItem.sendMessage("toString", "()Ljava/lang/String;", emptyArgs, thread, typeSignature);
-		    // node's description
-			String valItemString = valItemToString.getValueString();
-			result.add(new TreeNode(i + "", valItemString));
-			//System.out.println(i + ". = " + valItemString + ", [" + itemTypeSig + "]");
+			IJavaObject valItem = (IJavaObject)valIt.sendMessage("next", "()Ljava/lang/Object;", emptyArgs, thread, defaultSignature);
+			result.add(makeTreeNode(i + "", valItem, thread, 0));
 			i++;
 		}
 		return result;
