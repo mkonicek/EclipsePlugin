@@ -3,26 +3,33 @@ package n4;
 import java.util.ArrayList;
 
 public class TreeNode {
-	private String Name;
-	private String Value;
+	private String name;
+	private String text;
+	private boolean hasIterator = false;
 	private ArrayList<TreeNode> Children = new ArrayList<TreeNode>();
 	
 	public TreeNode(String name, String value) {
 		super();
-		Name = name;
-		Value = value;
+		this.name = name;
+		this.text = value;
 	}
 	public String getName() {
-		return Name;
+		return name;
 	}
 	public void setName(String name) {
-		Name = name;
+		this.name = name;
 	}
-	public String getValue() {
-		return Value;
+	public String getText() {
+		return text;
 	}
-	public void setValue(String value) {
-		Value = value;
+	public void setText(String value) {
+		text = value;
+	}
+	public boolean hasIterator() {
+		return hasIterator;
+	}
+	public void setHasIterator(boolean hasIterator) {
+		this.hasIterator = hasIterator;
 	}
 	
 	public Iterable<TreeNode> getChildren() {

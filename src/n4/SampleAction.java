@@ -87,7 +87,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			String defaultSignature = null;
 			try {
 				IJavaValue valItemToString = objValue.sendMessage("toString", "()Ljava/lang/String;", emptyArgs, thread, defaultSignature);
-				result.setValue(valItemToString.getValueString());
+				result.setText(valItemToString.getValueString());
 			} catch (DebugException ex) {
 				ex.printStackTrace();
 			}
@@ -98,6 +98,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			} catch (DebugException ex) {
 			}
 			if (valIt != null) {
+				result.setHasIterator(true);
 				TreeNode iteratorNode = result.addChild("iterator", "");
 				for (TreeNode iteratorItemNode : iteratorContents(valIt, thread)) {
 					iteratorNode.addChild(iteratorItemNode);
@@ -106,12 +107,15 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			if (depth < 3 && !isPrimitiveType(variableValue.getSignature())) {
 				for (IVariable childVar : variableValue.getVariables()) {
 					TreeNode childVarNode = makeTreeNode(childVar, thread, depth + 1);
-					result.addChild(childVarNode);
+					if (childVarNode.hasIterator()) {
+						// only add children which have an iterator
+						result.addChild(childVarNode);
+					}
 				}
 			}
 		} else {
 			// primitive type variable
-			result.setValue(variableValue.toString());
+			result.setText(variableValue.toString());
 		}
 		return result;
 	}
@@ -162,7 +166,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			}
 			// node
 			IJavaObject valItem = (IJavaObject)valIt.sendMessage("next", "()Ljava/lang/Object;", emptyArgs, thread, defaultSignature);
-			result.add(makeTreeNode(i + "", valItem, thread, 0));
+			result.add(makeTreeNode("[" + i + "]", valItem, thread, 0));
 			i++;
 		}
 		return result;

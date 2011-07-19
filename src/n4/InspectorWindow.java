@@ -42,7 +42,7 @@ public class InspectorWindow {
 	}
 	
 	private void fillTreeItem(TreeItem treeItem, TreeNode node) {
-		treeItem.setText(new String[] { node.getName(), node.getValue() });
+		treeItem.setText(new String[] { node.getName(), node.getText() });
 		for (TreeNode childNode : node.getChildren()) {
 			TreeItem childItem = new TreeItem(treeItem, SWT.NONE);
 			fillTreeItem(childItem, childNode);
