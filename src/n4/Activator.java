@@ -39,11 +39,6 @@ public class Activator extends AbstractUIPlugin {
 				if (events.length > 0) {
 					System.out.println(events[0]);
 				}
-				// has to be marshaled to the main thread
-				/*MessageDialog.openInformation(
-						window.getShell(),
-						"FirstPlugin",
-						"Debug event!");*/
 			}
 		});
 	}

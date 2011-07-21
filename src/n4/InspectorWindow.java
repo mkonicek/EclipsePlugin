@@ -31,6 +31,7 @@ public class InspectorWindow {
 	private void fillTree(Tree tree, Iterable<TreeNode> nodes) {
 		for (TreeNode node : nodes) {
 			TreeItem rootLevelItem = new TreeItem(tree, SWT.NONE);
+			// lazy load on expand
 //			rootLevelItem.addListener(SWT.Expand, new Listener() {
 //				@Override
 //				public void handleEvent(Event event) {
@@ -67,10 +68,11 @@ public class InspectorWindow {
 
 	/**
 	 * Create contents of the window.
+	 * @wbp.parser.entryPoint
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setSize(470, 300);
+		shell.setSize(640, 360);
 		shell.setText("Variables");
 		shell.setLayout(new FillLayout(SWT.HORIZONTAL));
 
@@ -79,7 +81,7 @@ public class InspectorWindow {
 		tree.setHeaderVisible(true);
 	    TreeColumn column1 = new TreeColumn(tree, SWT.LEFT);
 	    column1.setText("Variable");
-	    column1.setWidth(120);
+	    column1.setWidth(219);
 	    TreeColumn column2 = new TreeColumn(tree, SWT.LEFT);
 	    column2.setText("Value");
 	    column2.setWidth(300);

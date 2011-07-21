@@ -19,16 +19,7 @@
                label="Sample Action"
                icon="icons/sample.gif"
                class="n4.SampleAction"
-               tooltip="Hello, Eclipse world"
-               menubarPath="sampleMenu/sampleGroup"
-               toolbarPath="sampleGroup"
-               id="firstplugin.actions.SampleAction">
-         </action>
-         <action
-               label="Sample Action 2"
-               icon="icons/sample.gif"
-               class="n4.SampleAction"
-               tooltip="Hello, Eclipse world"
+               tooltip="Variables"
                menubarPath="sampleMenu/sampleGroup"
                toolbarPath="sampleGroup"
                id="firstplugin.actions.SampleAction">
