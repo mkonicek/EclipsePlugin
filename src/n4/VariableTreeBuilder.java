@@ -14,7 +14,7 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaValue;
 
-/** Builds tree model for debugger variables, suitable to be displayed in a . */
+/** Builds tree model for debugger variables. */
 public class VariableTreeBuilder {
 	
 	/** Max depth of the variable tree. */
